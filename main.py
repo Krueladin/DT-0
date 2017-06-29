@@ -38,8 +38,9 @@ def calc_entropy(target):
 def calc_info_gain(col, target):
     """Calculates the information gain according to a target column (column with desired values
     for prediction) and a column of data from the same dataset.
-    Used for training a descision tree.
-
+    
+    Used for training a descision tree. 'col' must be equal in length to 'target'.
+    
     Information Gain is a measure of the difference of entropy after the dataset 'S' is split
     on an attribute (column) of the dataset 'A'.
     G(A, S) = H(S) - Sum (t in T, 1, k): p(t)H(t)
@@ -54,14 +55,18 @@ def calc_info_gain(col, target):
     col - An array of data representing a single column of a dataset.
     target - An array of data representing the information desired in classification.
 
+    Throws an exception if 'col' and 'target' are not equal in length.
     Returns a float value representing the information gain of the parameter 'col'.
     """
+    # Check that 'col' and 'target are of the same size.
+    if len(col) != len(target):
+        raise Exception("data are not equal lengths: {} vs. {}".format(len(col), len(target)))
+    
     # Find the classes within the target column
     # and the entropy of the target column.
     t_classes = find_label_totals(target)
     t_entropy = calc_entropy(target)
 
-    
     c_classes = find_label_totals(col)
     c_entropies = []
     length_arr = []
