@@ -1,5 +1,15 @@
 import math
 import csv
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(description="Classification tree.")
+parser.add_argument('file', metavar='F', help='Dataset csv file for classification.')
+parser.add_argument('target_column', metavar='t', type=int, 
+        help='Column where classification data is located.')
+parser.add_argument('num_rows', nargs='?', metavar='r', type=int, default=-1, 
+        help='Number of rows to read from the dataset.')
+
 
 def calc_entropy(target):
     """Calculates the entropy of a single column.
@@ -105,25 +115,46 @@ def find_label_totals(col):
         val_dict[k] += 1
     return val_dict 
 
-def main():
-    print "Started"
-    cols = []
+def read_data_file(file, target_col, lines_to_read=-1):
+    """Opens and reads a csv data file and returns a dataset, column major, and a target set
+    cooresponding to the associated rows.
     
-    # Put together the first 100 lines of the dataset.
-    with open('agaricus-lepiota.csv', 'rb') as csvfile:
+    file - The file to read.
+    target_col - The column where classifier data is located.
+    lines_to_read - The number of rows of the dataset to read. If # of lines specified is greater
+                    than what is located in the file, function returns as many rows located 
+                    in the file.
+    Returns a pair, an array organized column-major and the cooresponding target column. 
+        e.g. (cols, target) = read_data_file('dataset.csv', 0, 100)
+            # Reads the first 100 rows of a dataset 'dataset.csv' with 
+            # the classifier objective row of '0'.
+            cols[0] # Returns the first column of the dataset that is not part of classification.
+    """
+    cols = []
+    # Put together the first number of specified lines of the dataset.
+    with open(file, 'rb') as csvfile:
+        if lines_to_read < 1:
+            lines_to_read = sum(1 for row in csvfile)
+            csvfile.seek(0)
+    
         reader = csv.reader(csvfile, delimiter=",", quotechar='|')
-        for i, row in zip(range(100), reader):
+        for i, row in zip(range(lines_to_read), reader):
             for j, col in zip(range(len(row)), row):
                 if len(cols) <= j:
                     cols.append([])
                 cols[j].append(col)
-            if i == 100:
+            if i == lines_to_read:
                 break
-    
     # Calculate the information gain of each of the columns.
     # Select the column giving the most information gain.
-    target = cols[0]
-    del cols[0]
+    target = cols[target_col]
+    del cols[target_col]
+    return (cols, target)
+
+def main():
+    print "Started"
+    args = parser.parse_args()
+    (cols, target) = read_data_file(args.file, args.target_column, args.num_rows)
     col_gain = []
     for col in cols:
         col_gain.append(calc_info_gain(col, target))
